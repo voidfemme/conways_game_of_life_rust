@@ -74,6 +74,7 @@ fn get_num_neighbors(grid: &Vec<Vec<bool>>, y: usize, x: usize) -> u8 {
 fn step_simulation(grid: &Vec<Vec<bool>>) -> Vec<Vec<bool>> {
     let side_length = grid.len();
     let mut grid_buffer: Vec<Vec<bool>> = vec![vec![false; side_length]; side_length];
+    let mut live_cells = 0;
 
     for (y, row) in grid.iter().enumerate() {
         for (x, &cell) in row.iter().enumerate() {
@@ -82,6 +83,7 @@ fn step_simulation(grid: &Vec<Vec<bool>>) -> Vec<Vec<bool>> {
 
             // apply rules
             if cell {
+                live_cells += 1;
                 if number_of_neighbors == 2 || number_of_neighbors == 3 {
                     grid_buffer[y][x] = true;
                 } // else cell dies from under- or over-population, default false
@@ -93,6 +95,18 @@ fn step_simulation(grid: &Vec<Vec<bool>>) -> Vec<Vec<bool>> {
         }
     }
     grid_buffer
+}
+
+fn count_live_cells(grid: &Vec<Vec<bool>>) -> i32 {
+    let mut number_of_neighbors = 0;
+    for (y, row) in grid.iter().enumerate() {
+        for (x, &cell) in row.iter().enumerate() {
+            if cell {
+                number_of_neighbors += 1;
+            }
+        }
+    }
+    number_of_neighbors
 }
 
 fn main() -> Result<(), std::io::Error> {
@@ -164,12 +178,20 @@ fn main() -> Result<(), std::io::Error> {
 
     // Run simulation
     for i in 0..500 {
+        let num_live_cells = count_live_cells(&grid);
         // Display the generation
         write!(
             stdout,
             "{}Generation: {}",
             cursor::Goto(0, side_length as u16 + 5),
             i
+        )
+        .unwrap();
+        write!(
+            stdout,
+            "{}Number of live cells: {}",
+            cursor::Goto(0, side_length as u16 + 6),
+            num_live_cells,
         )
         .unwrap();
 
@@ -188,6 +210,6 @@ fn main() -> Result<(), std::io::Error> {
     // Show the cursor and flush the output. Return the error at the end.
     write!(stdout, "{}\n", termion::cursor::Show).unwrap();
     stdout.flush().unwrap();
-        write!(stdout, "{}", termion::clear::All).unwrap();
+    write!(stdout, "{}", termion::clear::All).unwrap();
     Ok(())
 }
